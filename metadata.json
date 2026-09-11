@@ -1,0 +1,6 @@
+{
+  "name": "Custom Hauling Inc.",
+  "description": "Property Solutions & Hauling in San Diego, CA. Fast junk removal, cleanouts, yard care, and property maintenance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

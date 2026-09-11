@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #000000;
+    color: #ffffff;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom metallic gold text and button gradients matching the design */
+.text-gold-gradient {
+  background: linear-gradient(180deg, #FFF1A8 0%, #DFB448 45%, #C28F22 75%, #F0CE68 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-green-gradient {
+  background: linear-gradient(180deg, #22C55E 0%, #10B981 50%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(180deg, #F9DF7B 0%, #DFB244 50%, #B8851B 100%);
+}
+
+.gold-glow {
+  box-shadow: 0 0 28px rgba(212, 175, 55, 0.45);
+}
+
+.gold-border-glow {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
