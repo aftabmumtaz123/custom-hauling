@@ -4,11 +4,16 @@ import { CompanyLogo } from './components/CompanyLogo';
 import { GoldHeaderRibbons } from './components/GoldHeaderRibbons';
 import { GoldFooterRibbon } from './components/GoldFooterRibbon';
 import { getServiceIcon } from './components/ServiceIcons';
-import { SERVICES, ServiceItem } from './data/services';
+import contactData from './data/contact.json';
 import { ServiceModal } from './components/ServiceModal';
 import { TextModal } from './components/TextModal';
 import { Toast } from './components/Toast';
 import { downloadVCard } from './utils/vcard';
+
+type ServiceItem = (typeof contactData.services)[number];
+
+const CONTACT = contactData;
+const SERVICES = CONTACT.services;
 
 export default function App() {
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
@@ -24,42 +29,66 @@ export default function App() {
     }, 3200);
   };
 
+  const getWebsite = () => CONTACT.website?.trim() || window.location.origin;
+
+  const getLocationQuery = () => CONTACT.location.mapQuery || CONTACT.location.label;
+
   const handleCall = () => {
-    showToast("Calling (619) 634-5953...", "info");
-    window.location.href = "tel:6196345953";
+    showToast(`Calling ${CONTACT.phone}...`, "info");
+    window.location.href = `tel:${CONTACT.phone.replace(/\D/g, "")}`;
   };
 
   const handleOpenText = (initialMsg?: string) => {
     if (initialMsg) {
       setTextModalMessage(initialMsg);
     } else {
-      setTextModalMessage("Hi Custom Hauling, I need an estimate for property services in San Diego.");
+      setTextModalMessage(`Hi ${CONTACT.name}, I need an estimate for property services in ${CONTACT.serviceArea}.`);
     }
     setIsTextModalOpen(true);
   };
 
   const handleGetDirections = () => {
-    showToast("Opening San Diego, CA service area map...", "info");
-    const mapsUrl = "https://www.google.com/maps/search/?api=1&query=San+Diego,+CA";
+    const location = getLocationQuery();
+    showToast(`Opening ${CONTACT.location.city} map...`, "info");
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
     window.open(mapsUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleSaveContact = () => {
     try {
-      downloadVCard();
-      showToast("Custom Hauling Inc. contact card downloaded!", "success");
-    } catch {
-      showToast("Unable to download vCard directly. Call (619) 634-5953.", "info");
+      downloadVCard({
+        name: CONTACT.name,
+        organization: CONTACT.organization,
+        title: CONTACT.title,
+        phone: CONTACT.phone,
+        email: CONTACT.email,
+        address: CONTACT.location.address,
+        city: CONTACT.location.city,
+        state: CONTACT.location.state,
+        postalCode: CONTACT.location.postalCode,
+        country: CONTACT.location.country,
+        label: CONTACT.location.label,
+        website: getWebsite(),
+        note: [
+          CONTACT.slogan,
+          `Service area: ${CONTACT.serviceArea}.`,
+          `Services: ${SERVICES.map((service) => service.name.replace(/\n/g, " ")).join(", ")}.`,
+          `Contact location: ${CONTACT.location.label}.`
+        ].join("\n"),
+        links: CONTACT.socialLinks
+      });
+      showToast(`${CONTACT.name} contact card downloaded!`, "success");
+    } catch (error) {
+      console.error("vCard download failed:", error);
+      showToast(`Unable to download vCard directly. Call ${CONTACT.phone}.`, "info");
     }
   };
 
-  const handleSocialClick = (platform: 'Facebook' | 'Instagram') => {
-    showToast(`Opening Custom Hauling ${platform}...`, 'info');
-    if (platform === 'Facebook') {
-      window.open("https://www.facebook.com", "_blank", "noopener,noreferrer");
-    } else {
-      window.open("https://www.instagram.com", "_blank", "noopener,noreferrer");
-    }
+  const handleSocialClick = (platform: string) => {
+    const social = CONTACT.socialLinks.find((link) => link.name === platform);
+    if (!social?.value) return;
+    showToast(`Opening ${CONTACT.name} ${platform}...`, 'info');
+    window.open(social.value, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -86,8 +115,8 @@ export default function App() {
 
           {/* Slogan */}
           <div className="mt-1 text-neutral-200 text-xs sm:text-[13px] font-medium italic leading-relaxed">
-            <p>More Than Just Hauling...</p>
-            <p>We Take Care of Your Property!</p>
+            <p>{CONTACT.slogan.split("...")[0]}...</p>
+            <p>{CONTACT.slogan.split("...").slice(1).join("...").trim()}</p>
           </div>
 
           {/* Primary Call Action Pill */}
@@ -95,13 +124,13 @@ export default function App() {
             id="btn-call-primary"
             onClick={handleCall}
             className="w-full max-w-[350px] py-3.5 px-6 rounded-full bg-gold-gradient gold-glow text-neutral-950 flex items-center justify-center gap-3.5 transition-transform hover:scale-[1.01] active:scale-[0.98] mt-3.5 cursor-pointer shadow-lg"
-            aria-label="Call Custom Hauling Inc. at 619-634-5953"
+            aria-label={`Call ${CONTACT.name} at ${CONTACT.phone}`}
           >
             <div className="w-8 h-8 rounded-full bg-[#0E0E10] flex items-center justify-center text-[#F3CA52] shrink-0 shadow-inner">
               <Phone className="w-4 h-4 fill-current rotate-[-10deg]" />
             </div>
             <span className="font-black text-xl sm:text-[23px] tracking-tight text-[#111114]">
-              619-634-5953
+              {CONTACT.phone}
             </span>
           </button>
 
@@ -128,7 +157,7 @@ export default function App() {
                 id="btn-quick-directions"
                 onClick={handleGetDirections}
                 className="w-13 h-13 rounded-full bg-[#18181C] border border-[#7A6023]/70 hover:border-amber-400 text-neutral-200 hover:text-white flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer"
-                aria-label="Get Directions to San Diego"
+                aria-label={`Get Directions to ${CONTACT.location.businessName}, ${CONTACT.location.city}`}
               >
                 <MapPin className="w-5 h-5 fill-current/20" />
               </button>
@@ -182,16 +211,16 @@ export default function App() {
             ))}
           </div>
 
-          {/* Service Area Pill */}
+          {/* Contact Location — driven entirely by contact.json */}
           <button
             id="btn-location-area"
             onClick={handleGetDirections}
             className="w-full max-w-[340px] py-2.5 px-4 rounded-full bg-[#141418]/90 border border-neutral-800 hover:border-amber-500/40 flex items-center justify-center gap-2 mt-5 transition-all active:scale-98 cursor-pointer shadow-sm"
           >
             <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="text-xs font-bold text-white">San Diego, CA</span>
+            <span className="text-xs font-bold text-white">{CONTACT.location.city}, {CONTACT.location.state}</span>
             <span className="text-[11px] text-neutral-400 font-normal">
-              & Surrounding Areas
+              {CONTACT.location.businessName}
             </span>
           </button>
 
@@ -202,7 +231,7 @@ export default function App() {
               id="btn-social-facebook"
               onClick={() => handleSocialClick('Facebook')}
               className="p-1 hover:scale-110 transition-transform cursor-pointer"
-              aria-label="Custom Hauling on Facebook"
+              aria-label={`${CONTACT.name} on Facebook`}
             >
               <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="11" fill="#F3CA52" />
@@ -220,7 +249,7 @@ export default function App() {
               id="btn-social-instagram"
               onClick={() => handleSocialClick('Instagram')}
               className="p-1 hover:scale-110 transition-transform cursor-pointer"
-              aria-label="Custom Hauling on Instagram"
+              aria-label={`${CONTACT.name} on Instagram`}
             >
               <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none">
                 <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="#F3CA52" strokeWidth="2.4" />
