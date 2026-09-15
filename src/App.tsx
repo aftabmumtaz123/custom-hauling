@@ -56,9 +56,9 @@ export default function App() {
     showToast(`Opening ${CONTACT.location.city} map...`, "info");
   };
 
-  const handleSaveContact = () => {
+  const handleSaveContact = async () => {
     try {
-      downloadVCard({
+      await downloadVCard({
         name: CONTACT.name,
         organization: CONTACT.organization,
         title: CONTACT.title,
@@ -79,7 +79,7 @@ export default function App() {
         ].join("\n"),
         links: CONTACT.whatsappNumber
           ? [{ name: 'WhatsApp', value: `https://wa.me/${CONTACT.whatsappNumber}` }]
-          : undefined
+          : undefined,
       });
       showToast(`${CONTACT.name} contact card downloaded!`, "success");
     } catch (error) {

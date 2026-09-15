@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, Phone, MessageSquare, Copy, Check } from 'lucide-react';
+
+const QUICK_TEMPLATES = [
+  "Need junk & debris removal estimate",
+  "House/garage cleanout inquiry",
+  "Yard cleanup & hauling quote",
+  "Small repairs & maintenance quote"
+];
 
 interface TextModalProps {
   isOpen: boolean;
@@ -17,6 +24,13 @@ export const TextModal: React.FC<TextModalProps> = ({
 }) => {
   const [message, setMessage] = useState(initialMessage);
   const [copied, setCopied] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
+
+  useEffect(() => {
+    setMessage(initialMessage);
+    const matchedIndex = QUICK_TEMPLATES.findIndex((template) => initialMessage.includes(template));
+    setSelectedTopic(matchedIndex >= 0 ? matchedIndex : null);
+  }, [initialMessage, isOpen]);
   const phoneNumber = "+1 619-634-5953";
   // Include the US country code so devices in other countries do not infer their local country code (e.g. +92).
   const rawNumber = "+16196345953";
@@ -38,13 +52,6 @@ export const TextModal: React.FC<TextModalProps> = ({
       // fallback
     }
   };
-
-  const quickTemplates = [
-    "Need junk & debris removal estimate",
-    "House/garage cleanout inquiry",
-    "Yard cleanup & hauling quote",
-    "Small repairs & maintenance quote"
-  ];
 
   return (
     <AnimatePresence>
@@ -88,12 +95,19 @@ export const TextModal: React.FC<TextModalProps> = ({
               Select Quick Topic:
             </label>
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {quickTemplates.map((template, idx) => (
+              {QUICK_TEMPLATES.map((template, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => setMessage(`Hi, I would like to inquire about: ${template}. Please let me know your availability.`)}
-                  className="text-[11px] py-1 px-2.5 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700/80 transition-colors"
+                  onClick={() => {
+                    setSelectedTopic(idx);
+                    setMessage(`Hi, I would like to inquire about: ${template}. Please let me know your availability.`);
+                  }}
+                  className={`text-[11px] py-1 px-2.5 rounded-full border transition-all ${
+                    selectedTopic === idx
+                      ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 border-amber-400 text-neutral-950 font-semibold shadow-md shadow-amber-500/20'
+                      : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700/80'
+                  }`}
                 >
                   {template}
                 </button>

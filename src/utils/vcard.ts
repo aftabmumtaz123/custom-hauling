@@ -24,6 +24,8 @@ export interface VCardContact {
   website?: string;
   note?: string;
   links?: VCardLink[];
+  photoUrl?: string;
+  photoType?: 'JPEG' | 'PNG';
 }
 
 // Escape values according to the vCard 3.0 text-value rules.
@@ -45,7 +47,36 @@ function normalizeUrl(url = ''): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
-export function downloadVCard(contact: VCardContact) {
+function normalizePhoneNumber(phone = ''): string {
+  const digits = String(phone).replace(/\D/g, '');
+  if (!digits) return '';
+  const international = digits.length === 10 ? `1${digits}` : digits;
+  return `+${international}`;
+}
+
+function foldVCardValue(value: string, prefix: string): string {
+  const firstChunkLength = Math.max(1, 72 - prefix.length);
+  const chunks = [value.slice(0, firstChunkLength)];
+  for (let i = firstChunkLength; i < value.length; i += 72) {
+    chunks.push(` ${value.slice(i, i + 72)}`);
+  }
+  return `${prefix}${chunks.join('\r\n')}`;
+}
+
+async function imageToBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Unable to load contact photo (${response.status})`);
+  const buffer = await response.arrayBuffer();
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+export async function downloadVCard(contact: VCardContact) {
   const name = contact.name?.trim() || 'Contact';
   const website = normalizeUrl(contact.website);
 
@@ -68,10 +99,10 @@ export function downloadVCard(contact: VCardContact) {
   }
 
   if (contact.phone) {
-    const phone = contact.phone.trim();
+    const phone = normalizePhoneNumber(contact.phone);
     // Add the configured phone number once. Duplicating the same number as
     // both Work and Mobile makes Android Contacts show two identical fields.
-    lines.push(`TEL;TYPE=WORK,VOICE:${escapeVCardParam(phone)}`);
+    lines.push(`TEL;TYPE=CELL,VOICE:${phone}`);
   }
 
   if (contact.email) {
@@ -89,23 +120,31 @@ export function downloadVCard(contact: VCardContact) {
   }
 
   if (website) {
-    lines.push(`URL:${escapeVCardParam(website)}`);
+    lines.push(`URL:${website}`);
   }
 
   if (contact.note) {
     lines.push(`NOTE:${escapeVCardText(contact.note)}`);
   }
 
-  contact.links?.forEach((link, index) => {
+  // Add each link only once. iOS can show duplicate entries when the same
+  // WhatsApp URL is written as both X-SOCIALPROFILE and URL. Keep one clean
+  // URL property and do not escape ':' or '/' in the URL itself.
+  contact.links?.forEach((link) => {
     const url = normalizeUrl(link.value);
     if (!url) return;
-    const safeName = escapeVCardParam(link.name || `Social ${index + 1}`);
-
-    // Keep X-SOCIALPROFILE for clients that understand it, and also expose
-    // the same profile as a typed URL for broader Android/iOS compatibility.
-    lines.push(`item${index + 1}.X-SOCIALPROFILE;TYPE=${safeName}:${escapeVCardParam(url)}`);
-    lines.push(`URL;TYPE=${safeName}:${escapeVCardParam(url)}`);
+    lines.push(`URL;TYPE=${escapeVCardParam(link.name || 'Website')}:${url}`);
   });
+
+  if (contact.photoUrl) {
+    try {
+      const base64 = await imageToBase64(contact.photoUrl);
+      const type = contact.photoType || 'JPEG';
+      lines.push(foldVCardValue(base64, `PHOTO;ENCODING=b;TYPE=${type}:`));
+    } catch (error) {
+      console.warn('vCard photo could not be embedded; continuing without photo.', error);
+    }
+  }
 
   lines.push('END:VCARD');
 
