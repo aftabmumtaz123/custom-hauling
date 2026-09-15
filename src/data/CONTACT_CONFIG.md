@@ -6,7 +6,8 @@ Edit `contact.json` to change the information shown by the website and saved int
 - `email`: email address, or `null` when there is none
 - `slogan`, `serviceArea`: page copy
 - `website`: leave empty (`""`) to automatically use the deployed site origin; set a URL to override it
-- `socialLinks`: only these defined links are opened and saved to the vCard
+- `socialLinks`: legacy social-link field; leave empty when the client has no social media profiles
+- `whatsappNumber`: WhatsApp number in international format without `+` (for example, `16196345953`). The page uses it to open WhatsApp with a pre-filled welcome message
 - `location`: the contact address used for Google Maps directions and the downloaded vCard. The website does not embed a map; it only shows the configured location.
 - `services`: service cards and service modal content
 

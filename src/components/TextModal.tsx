@@ -17,8 +17,9 @@ export const TextModal: React.FC<TextModalProps> = ({
 }) => {
   const [message, setMessage] = useState(initialMessage);
   const [copied, setCopied] = useState(false);
-  const phoneNumber = "619-634-5953";
-  const rawNumber = "6196345953";
+  const phoneNumber = "+1 619-634-5953";
+  // Include the US country code so devices in other countries do not infer their local country code (e.g. +92).
+  const rawNumber = "+16196345953";
 
   if (!isOpen) return null;
 
