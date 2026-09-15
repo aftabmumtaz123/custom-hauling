@@ -9,6 +9,7 @@ import { ServiceModal } from './components/ServiceModal';
 import { TextModal } from './components/TextModal';
 import { Toast } from './components/Toast';
 import { downloadVCard } from './utils/vcard';
+import customHaulingLogo from './assets/images/custom-hauling-logo.png';
 
 type ServiceItem = (typeof contactData.services)[number];
 
@@ -71,6 +72,8 @@ export default function App() {
         country: CONTACT.location.country,
         label: CONTACT.location.label,
         website: getWebsite(),
+        photoUrl: customHaulingLogo,
+        photoType: 'PNG',
         note: [
           CONTACT.slogan,
           `Service area: ${CONTACT.serviceArea}.`,
